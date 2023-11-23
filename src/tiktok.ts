@@ -182,7 +182,9 @@ export class TikTok {
             username: user.user_info.unique_id,
             nickname: user.user_info.nickname,
             signature: user.user_info.signature,
-            verified: user.user_info.enterprise_verify_reason !== "" || user.user_info.custom_verify !== "",
+            verified:
+                user.user_info.enterprise_verify_reason !== "" ||
+                user.user_info.custom_verify !== "",
             followerCount: user.user_info.follower_count,
             avatarThumb: user.user_info.avatar_thumb.url_list[0],
         }))
@@ -339,8 +341,6 @@ export class TikTok {
         let retryCount = 0
         while (true) {
             try {
-                console.log("makeRequest", url.toString(), this.headers)
-
                 const response = await this.session.evaluate(
                     (url, headers) => {
                         return new Promise<string>((resolve, reject) => {

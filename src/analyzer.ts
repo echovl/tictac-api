@@ -3,15 +3,30 @@ import { pipeline } from "@xenova/transformers"
 
 import { TikTok, TikTokComment } from "./tiktok.js"
 
-const MAX_VIDEOS_PER_USER = 50
-const MAX_COMMENTS_PER_VIDEO = 100
+const MAX_VIDEOS_PER_USER = 10
+const MAX_COMMENTS_PER_VIDEO = 50
 const PROFILE_ANALYSIS_EXPIRATION = 60 * 60 * 1 // 1 hour
+
+export type TaggedComment = {
+    comment: TikTokComment
+    label: string
+    score: number
+}
 
 export class ProfileAnalyzer {
     constructor(
         private tiktok: TikTok,
         private redis: Redis
     ) {}
+
+    async getTaggedComments(username: string): Promise<TaggedComment[]> {
+        const cached = await this.redis.get(username)
+        if (cached) {
+            return JSON.parse(cached)
+        }
+
+        return []
+    }
 
     async analyze(username: string) {
         try {
@@ -42,22 +57,33 @@ export class ProfileAnalyzer {
 
             console.log(`Analyzer: Done fetching comments`)
 
+            let classifier = await pipeline("sentiment-analysis")
+
+            // Only use english comments
+            comments = comments.filter((c) => c.language === "en")
+
+            // Sort comments by creation time ascending
+            comments = comments.sort((a, b) => a.createTime - b.createTime)
+
+            console.log(`Analyzer: Analyzing ${comments.length} comments`)
+
+            const taggedComments = new Array<TaggedComment>()
+            const commentsTags = await classifier(comments.map((c) => c.text))
+
+            for (const [idx, comment] of comments.entries()) {
+                taggedComments.push({
+                    comment,
+                    label: commentsTags[idx].label,
+                    score: commentsTags[idx].score,
+                })
+            }
+
             await this.redis.set(
                 username,
-                JSON.stringify(comments),
+                JSON.stringify(taggedComments),
                 "EX",
                 PROFILE_ANALYSIS_EXPIRATION
             )
-
-            const t0 = performance.now()
-            let classifier = await pipeline("sentiment-analysis")
-            const t1 = performance.now()
-            console.log(`Analyzer: Loaded sentiment-analysis in ${t1 - t0}ms`)
-
-            for (const comment of comments) {
-                const output = await classifier(comment.text)
-                console.log(comment.text, output)
-            }
         } catch (e) {
             console.log(`Analyzer: Got error while analyzing ${username}`, e)
         }

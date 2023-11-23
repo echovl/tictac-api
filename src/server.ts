@@ -43,13 +43,28 @@ export async function handleUser(c: Context<ServerEnv>) {
     }
 
     const user = await srv.tiktok.getUser(username)
-    console.log("user", user)
     const [lastVideo] = await srv.tiktok.getVideos(user, 1)
-    console.log("lastVideo", lastVideo)
     const comments = await srv.tiktok.getComments(lastVideo, 20)
-    console.log("comments", comments)
 
     setTimeout(() => srv.analyzer.analyze(username), 1000)
 
     return c.json({ user, lastVideo, comments })
+}
+
+export async function handleComments(c: Context<ServerEnv>) {
+    const srv = c.get("server")
+    const username = c.req.param("username")
+
+    if (!username) {
+        c.status(400)
+        return c.body("Missing username")
+    }
+
+    if (!srv.tiktok.initialized) {
+        await srv.tiktok.init()
+    }
+
+    const comments = await srv.analyzer.getTaggedComments(username)
+
+    return c.json({ pending: comments.length == 0, comments })
 }
