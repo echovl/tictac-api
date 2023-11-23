@@ -71,7 +71,7 @@ export class TikTok {
 
         const browser = await puppeteer.launch({
             headless: "new",
-            args: ["--no-sandbox"],
+            args: ["--no-sandbox", "--incognito"],
         })
         const session = await browser.newPage()
 
@@ -79,6 +79,26 @@ export class TikTok {
         let headers = {}
         session.once("request", (req) => (headers = req.headers()))
         await session.goto("https://www.tiktok.com")
+
+        if (!this.msToken) {
+            // Extract msToken from cookies
+            await sleep(1000)
+            const cookies = await session.cookies()
+            const msTokenCookie = cookies.find(
+                (cookie) => cookie.name === "msToken"
+            )
+            if (!msTokenCookie) {
+                throw new Error("msToken cookie not found")
+            }
+            this.msToken = msTokenCookie.value
+        } else {
+            this.session?.setCookie({
+                name: "msToken",
+                value: this.msToken || "",
+                domain: new URL("https://www.tiktok.com").hostname,
+                path: "/",
+            })
+        }
 
         // Evaluate common URL parameters
         // @ts-ignore
@@ -96,13 +116,6 @@ export class TikTok {
         const timezone = await session.evaluate(
             () => Intl.DateTimeFormat().resolvedOptions().timeZone
         )
-
-        this.session?.setCookie({
-            name: "msToken",
-            value: this.msToken || "",
-            domain: new URL("https://www.tiktok.com").hostname,
-            path: "/",
-        })
 
         this.initialized = true
         this.browser = browser

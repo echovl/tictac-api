@@ -10,7 +10,7 @@ import { ProfileAnalyzer } from "./analyzer.js"
 console.log(process.env)
 const redis = new Redis(process.env.REDIS_URL as string)
 const tiktok = new TikTok(
-    "YpxcujJTGdg76yC80GZc20CADhqYxjELnYBsAbHuc6hz_dCv9OsAOgLcWFlYX5tazlJ9FMJXsHPG2HjnNdqsJYTzSTk4i-V7VfNgMVET0oY1ts6BcQNCavQiQMAvdSA_KoMDGvb6HIzGInp9"
+    "G9_DQs1kZrHXLZUCz-7racagGtoJECnXVIFN-B9KlbaudjfzY2WVF_q9z97IyY7ZRMHlukWAnu1o10Ag5WubGekjSExvY3yIc0Ey4EvFBkRJltrL437WEFX8NMPQFKOyS2l0SQdfdzmIWwdC"
 )
 
 const srv: Server = {
