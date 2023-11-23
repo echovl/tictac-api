@@ -2,10 +2,13 @@ import { Redis } from "ioredis"
 import { pipeline } from "@xenova/transformers"
 
 import { TikTok, TikTokComment } from "./tiktok.js"
+import { sleep } from "./util.js"
 
 const MAX_VIDEOS_PER_USER = 15
 const MAX_COMMENTS_PER_VIDEO = 50
 const PROFILE_ANALYSIS_EXPIRATION = 60 * 60 * 1 // 1 hour
+const ANALYZER_MS_TOKEN =
+    "pOwbuRkQLAa7cOjRwczTiDMvnta6JOmefDPCu-AJSNjeHmUEl4DQJWf8xplQzFsior6fPKkoZzxfHHLO5OdqZJ7SsFEd4GV-I7flhNBwxSt70DDbxajxl4veDmIVuvJHd1KAi4vq4HwKI2qq"
 
 export enum TaggingStatus {
     Pending = "pending",
@@ -21,10 +24,10 @@ export type TaggedComment = {
 }
 
 export class ProfileAnalyzer {
-    constructor(
-        private tiktok: TikTok,
-        private redis: Redis
-    ) { }
+    tiktok: TikTok = new TikTok(ANALYZER_MS_TOKEN)
+    isAnalyzing = false
+
+    constructor(private redis: Redis) {}
 
     async getTaggedComments(
         username: string
@@ -40,8 +43,16 @@ export class ProfileAnalyzer {
         return [[], status as TaggingStatus]
     }
 
+    async waitUntilAvailable() {
+        while (this.isAnalyzing) {
+            await sleep(5000)
+        }
+    }
+
     async analyze(username: string) {
         try {
+            await this.waitUntilAvailable()
+
             if (!this.tiktok.initialized) {
                 await this.tiktok.init()
             }
@@ -55,6 +66,8 @@ export class ProfileAnalyzer {
             }
 
             console.log(`Analyzer: Analyzing ${username}`)
+
+            this.isAnalyzing = true
 
             await this.redis.set(
                 taggingStatusKey(username),
@@ -106,12 +119,15 @@ export class ProfileAnalyzer {
 
             await this.redis.set(taggingStatusKey(username), TaggingStatus.Done)
 
+            this.isAnalyzing = false
             // Sort comments by creation time ascending
             // comments = comments.sort((a, b) => a.createTime - b.createTime)
 
             console.log(`Analyzer: Done analyzing ${username}`)
         } catch (e) {
             console.log(`Analyzer: Got error while analyzing ${username}`, e)
+
+            this.isAnalyzing = false
 
             await this.redis.set(
                 taggingStatusKey(username),

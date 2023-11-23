@@ -19,7 +19,7 @@ const tiktok = new TikTok(process.env.MS_TOKEN as string)
 
 const srv: Server = {
     tiktok,
-    analyzer: new ProfileAnalyzer(tiktok, redis),
+    analyzer: new ProfileAnalyzer(redis),
 }
 
 const app = new Hono<ServerEnv>()
