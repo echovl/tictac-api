@@ -1,4 +1,4 @@
-import { ProfileAnalyzer, TaggedComment } from "./analyzer.js"
+import { ProfileAnalyzer } from "./analyzer.js"
 import { TikTok } from "./tiktok.js"
 import { Context, Env } from "hono"
 import dayjs from "dayjs"
@@ -14,6 +14,7 @@ type AggregatedComment = {
     date: Date
     // taggedComments: Array<TaggedComment>
     value: number
+    surplus?: number
 }
 
 type AggregatedWord = {
@@ -81,23 +82,31 @@ export async function handleComments(c: Context<ServerEnv>) {
     }
 
     const [comments, status] = await srv.analyzer.getTaggedComments(username)
-    const aggregatedComments = new Array<AggregatedComment>()
+    const aggregatedCommentsByLabel = new Array<AggregatedComment>()
+    const aggregatedCommentsByScore = new Array<AggregatedComment>()
     const wordCloud = new Array<AggregatedWord>()
 
     for (const tag of comments) {
         let date = dayjs.utc(tag.comment.createTime * 1000).startOf("day")
 
-        const existing = aggregatedComments.find(
+        const existing = aggregatedCommentsByLabel.find(
             (c) =>
                 c.date.getTime() === date.toDate().getTime() &&
                 c.group == tag.label
         )
         const isPositive = tag.label == "POSITIVE"
 
+        aggregatedCommentsByScore.push({
+            date: date.toDate(),
+            group: tag.label,
+            value: tag.score,
+            surplus: 10,
+        })
+
         if (existing) {
             existing.value += isPositive ? 1 : -1
         } else {
-            aggregatedComments.push({
+            aggregatedCommentsByLabel.push({
                 date: date.toDate(),
                 group: tag.label,
                 value: isPositive ? 1 : -1,
@@ -122,7 +131,7 @@ export async function handleComments(c: Context<ServerEnv>) {
     }
 
     // Sort comments by date (ascending) and label!
-    const positives = aggregatedComments
+    const positives = aggregatedCommentsByLabel
         .filter((c) => c.group === "POSITIVE")
         .toSorted((a, b) => {
             if (a.date.getTime() == b.date.getTime()) {
@@ -131,7 +140,7 @@ export async function handleComments(c: Context<ServerEnv>) {
             return a.date.getTime() > b.date.getTime() ? 1 : -1
         })
 
-    const negatives = aggregatedComments
+    const negatives = aggregatedCommentsByLabel
         .filter((c) => c.group === "NEGATIVE")
         .toSorted((a, b) => {
             if (a.date.getTime() == b.date.getTime()) {
@@ -140,9 +149,19 @@ export async function handleComments(c: Context<ServerEnv>) {
             return a.date.getTime() > b.date.getTime() ? 1 : -1
         })
 
+    // Sort comments by score (acending)
+    aggregatedCommentsByScore.sort((a, b) => {
+        if (a.date.getTime() == b.date.getTime()) {
+            return a.group > b.group ? 1 : -1
+        }
+        return a.date.getTime() > b.date.getTime() ? 1 : -1
+    })
+
+
     return c.json({
         status,
-        comments: positives.concat(negatives),
+        groupedComments: positives.concat(negatives),
+        comments: aggregatedCommentsByScore,
         wordCloud,
     })
 }
