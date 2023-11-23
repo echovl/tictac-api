@@ -121,9 +121,28 @@ export async function handleComments(c: Context<ServerEnv>) {
         }
     }
 
+    // Sort comments by date (ascending) and label!
+    const positives = aggregatedComments
+        .filter((c) => c.group === "POSITIVE")
+        .toSorted((a, b) => {
+            if (a.date.getTime() == b.date.getTime()) {
+                return a.group > b.group ? 1 : -1
+            }
+            return a.date.getTime() > b.date.getTime() ? 1 : -1
+        })
+
+    const negatives = aggregatedComments
+        .filter((c) => c.group === "NEGATIVE")
+        .toSorted((a, b) => {
+            if (a.date.getTime() == b.date.getTime()) {
+                return a.group > b.group ? 1 : -1
+            }
+            return a.date.getTime() > b.date.getTime() ? 1 : -1
+        })
+
     return c.json({
         status,
-        commentsPerDay: aggregatedComments,
+        comments: positives.concat(negatives),
         wordCloud,
     })
 }
