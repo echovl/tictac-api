@@ -79,11 +79,12 @@ export async function handleComments(c: Context<ServerEnv>) {
         return c.body("Missing username")
     }
 
-    const comments = await srv.analyzer.getTaggedComments(username)
+    const [comments, status] = await srv.analyzer.getTaggedComments(username)
     const aggregatedComments = new Array<AggregatedComment>()
+    const wordCloud = new Array<AggregatedWord>()
 
-    for (const comment of comments) {
-        const date = dayjs.utc(comment.comment.createTime * 1000)
+    for (const tag of comments) {
+        const date = dayjs.utc(tag.comment.createTime * 1000)
         const year = date.year()
         const month = date.month()
         const day = date.date()
@@ -91,45 +92,25 @@ export async function handleComments(c: Context<ServerEnv>) {
         const existing = aggregatedComments.find(
             (c) => c.year == year && c.month == month && c.day == day
         )
-        const isPositive = comment.label == "POSITIVE"
+        const isPositive = tag.label == "POSITIVE"
 
         if (existing) {
             existing.positiveCount += isPositive ? 1 : 0
             existing.negativeCount += isPositive ? 0 : 1
-            existing.taggedComments.push(comment)
+            existing.taggedComments.push(tag)
         } else {
             aggregatedComments.push({
                 day,
                 year,
                 month,
                 date: date.toDate(),
-                taggedComments: [comment],
+                taggedComments: [tag],
                 positiveCount: isPositive ? 1 : 0,
                 negativeCount: isPositive ? 0 : 1,
             })
         }
-    }
 
-    return c.json({
-        pending: comments.length == 0,
-        commentsPerDay: aggregatedComments,
-    })
-}
-
-export async function handleWordCloud(c: Context<ServerEnv>) {
-    const srv = c.get("server")
-    const username = c.req.param("username")
-
-    if (!username) {
-        c.status(400)
-        return c.body("Missing username")
-    }
-
-    const comments = await srv.analyzer.getTaggedComments(username)
-    const wordCloud = new Array<AggregatedWord>()
-
-    for (const taggedComment of comments) {
-        const text = taggedComment.comment.text.replace(/[^\w\s]/g, "")
+        const text = tag.comment.text.replace(/[^\w\s]/g, "")
 
         const words = text.split(" ")
         for (const word of words) {
@@ -143,7 +124,8 @@ export async function handleWordCloud(c: Context<ServerEnv>) {
     }
 
     return c.json({
-        pending: comments.length == 0,
-        words: wordCloud,
+        status,
+        commentsPerDay: aggregatedComments,
+        wordCloud,
     })
 }

@@ -4,7 +4,7 @@
 docker build -t tt .
 
 # Stop the docker image
-docker stop tictac
+docker rm tictac
 
 # Run the docker image
 docker run -p 3000:3000 --env-file .env -d --name tictac tt:latest
