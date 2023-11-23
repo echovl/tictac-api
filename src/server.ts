@@ -17,8 +17,9 @@ type AggregatedComment = {
 }
 
 type AggregatedWord = {
-    label: string
-    count: number
+    word: string
+    value: number
+    group: string
 }
 
 export type Server = {
@@ -114,11 +115,15 @@ export async function handleComments(c: Context<ServerEnv>) {
 
         const words = text.split(" ")
         for (const word of words) {
-            const existing = wordCloud.find((c) => c.label == word)
+            const existing = wordCloud.find((c) => c.word == word)
             if (existing) {
-                existing.count += 1
+                existing.value += 1
             } else {
-                wordCloud.push({ label: word, count: 1 })
+                wordCloud.push({
+                    word,
+                    value: 1,
+                    group: tag.comment.language,
+                })
             }
         }
     }
