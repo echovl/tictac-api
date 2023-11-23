@@ -15,8 +15,6 @@ const srv: Server = {
     analyzer: new ProfileAnalyzer(tiktok, redis),
 }
 
-await srv.tiktok.init()
-
 const app = new Hono<ServerEnv>()
 
 app.use("*", logger())
@@ -27,6 +25,11 @@ app.use("*", async (c, next) => {
 
 app.get("/search/:searchTerm", handleSearch)
 app.get("/user/:username", handleUser)
+
+// Wait for the network to be ready
+Bun.sleep(2 * 1000)
+
+await srv.tiktok.init()
 
 export default {
     port: process.env.PORT || 3000,
