@@ -20,6 +20,10 @@ export async function handleSearch(c: Context<ServerEnv>) {
         return c.body("Missing search term")
     }
 
+    if (!srv.tiktok.initialized) {
+        await srv.tiktok.init()
+    }
+
     const users = await srv.tiktok.searchUsers(searchTerm)
 
     return c.json(users)
@@ -32,6 +36,10 @@ export async function handleUser(c: Context<ServerEnv>) {
     if (!username) {
         c.status(400)
         return c.body("Missing username")
+    }
+
+    if (!srv.tiktok.initialized) {
+        await srv.tiktok.init()
     }
 
     const user = await srv.tiktok.getUser(username)

@@ -59,6 +59,7 @@ export class TikTok {
     msToken?: string
     session?: Page
     browser?: Browser
+    initialized: boolean = false
 
     constructor(msToken?: string) {
         this.msToken = msToken
@@ -103,6 +104,7 @@ export class TikTok {
             path: "/",
         })
 
+        this.initialized = true
         this.browser = browser
         this.session = session
         this.headers = headers
