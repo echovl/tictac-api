@@ -7,11 +7,8 @@ import { TikTok } from "./tiktok.js"
 import { Redis } from "ioredis"
 import { ProfileAnalyzer } from "./analyzer.js"
 
-console.log(process.env)
 const redis = new Redis(process.env.REDIS_URL as string)
-const tiktok = new TikTok(
-    "G9_DQs1kZrHXLZUCz-7racagGtoJECnXVIFN-B9KlbaudjfzY2WVF_q9z97IyY7ZRMHlukWAnu1o10Ag5WubGekjSExvY3yIc0Ey4EvFBkRJltrL437WEFX8NMPQFKOyS2l0SQdfdzmIWwdC"
-)
+const tiktok = new TikTok(process.env.MS_TOKEN as string)
 
 const srv: Server = {
     tiktok,
