@@ -14,6 +14,8 @@ export type TiktokUser = {
     signature: string
     verified: boolean
     followerCount: number
+    followingCount: number
+    heartCount: number
     videoCount: number
     avatarLarge: string
     avatarMedium: string
@@ -211,6 +213,8 @@ export class TikTok {
             signature: userInfo.userInfo.user.signature,
             verified: userInfo.userInfo.user.verified,
             followerCount: userInfo.userInfo.stats.followerCount,
+            followingCount: userInfo.userInfo.stats.followingCount,
+            heartCount: userInfo.userInfo.stats.heartCount,
             videoCount: userInfo.userInfo.stats.videoCount,
             avatarLarge: userInfo.userInfo.user.avatarLarger,
             avatarMedium: userInfo.userInfo.user.avatarMedium,

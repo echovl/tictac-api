@@ -57,7 +57,11 @@ export class ProfileAnalyzer {
 
             console.log(`Analyzer: Done fetching comments`)
 
+            console.log(`Analyzer: Loading classifier`)
+
             let classifier = await pipeline("sentiment-analysis")
+
+            console.log(`Analyzer: Done loading classifier`)
 
             // Only use english comments
             comments = comments.filter((c) => c.language === "en")
