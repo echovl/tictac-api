@@ -87,19 +87,20 @@ export async function handleComments(c: Context<ServerEnv>) {
     const wordCloud = new Array<AggregatedWord>()
 
     for (const tag of comments) {
-        let date = dayjs.utc(tag.comment.createTime * 1000).startOf("day")
+        let day = dayjs.utc(tag.comment.createTime * 1000).startOf("day")
+        let hour = dayjs.utc(tag.comment.createTime * 1000).startOf("hour")
 
         const existing = aggregatedCommentsByLabel.find(
             (c) =>
-                c.date.getTime() === date.toDate().getTime() &&
+                c.date.getTime() === day.toDate().getTime() &&
                 c.group == tag.label
         )
         const isPositive = tag.label == "POSITIVE"
 
         aggregatedCommentsByScore.push({
-            date: date.toDate(),
+            date: hour.toDate(),
             group: tag.label,
-            value: tag.score,
+            value: tag.score * 100,
             surplus: 10,
         })
 
@@ -107,7 +108,7 @@ export async function handleComments(c: Context<ServerEnv>) {
             existing.value += isPositive ? 1 : -1
         } else {
             aggregatedCommentsByLabel.push({
-                date: date.toDate(),
+                date: day.toDate(),
                 group: tag.label,
                 value: isPositive ? 1 : -1,
             })
@@ -156,7 +157,6 @@ export async function handleComments(c: Context<ServerEnv>) {
         }
         return a.date.getTime() > b.date.getTime() ? 1 : -1
     })
-
 
     return c.json({
         status,
