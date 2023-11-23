@@ -9,10 +9,15 @@ RUN apt-get update && apt-get install curl gnupg -y \
 
 RUN npm install -g pnpm
 
-COPY . .
+COPY pnpm-lock.yaml  .
+COPY package.json  .
 
-RUN pnpm install && pnpm run build
+RUN pnpm install
 
 RUN cd ./node_modules/puppeteer && node install.mjs
+
+COPY . .
+
+RUN pnpm build
 
 CMD [ "node", "./dist/index.js" ]
