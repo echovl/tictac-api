@@ -7,13 +7,13 @@ import utc from "dayjs/plugin/utc.js"
 dayjs.extend(utc)
 
 type AggregatedComment = {
-    day: number
-    year: number
-    month: number
+    // day: number
+    // year: number
+    // month: number
+    group: string
     date: Date
-    taggedComments: Array<TaggedComment>
-    positiveCount: number
-    negativeCount: number
+    // taggedComments: Array<TaggedComment>
+    value: number
 }
 
 type AggregatedWord = {
@@ -85,29 +85,22 @@ export async function handleComments(c: Context<ServerEnv>) {
     const wordCloud = new Array<AggregatedWord>()
 
     for (const tag of comments) {
-        const date = dayjs.utc(tag.comment.createTime * 1000)
-        const year = date.year()
-        const month = date.month()
-        const day = date.date()
+        let date = dayjs.utc(tag.comment.createTime * 1000).startOf("day")
 
         const existing = aggregatedComments.find(
-            (c) => c.year == year && c.month == month && c.day == day
+            (c) =>
+                c.date.getTime() === date.toDate().getTime() &&
+                c.group == tag.label
         )
         const isPositive = tag.label == "POSITIVE"
 
         if (existing) {
-            existing.positiveCount += isPositive ? 1 : 0
-            existing.negativeCount += isPositive ? 0 : 1
-            existing.taggedComments.push(tag)
+            existing.value += isPositive ? 1 : -1
         } else {
             aggregatedComments.push({
-                day,
-                year,
-                month,
                 date: date.toDate(),
-                taggedComments: [tag],
-                positiveCount: isPositive ? 1 : 0,
-                negativeCount: isPositive ? 0 : 1,
+                group: tag.label,
+                value: isPositive ? 1 : -1,
             })
         }
 
