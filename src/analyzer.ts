@@ -68,13 +68,16 @@ export class ProfileAnalyzer {
             console.log(`Analyzer: Analyzing ${comments.length} comments`)
 
             const taggedComments = new Array<TaggedComment>()
-            const commentsTags = await classifier(comments.map((c) => c.text))
+
+            console.log(`Analyzer: Tagging comments`)
 
             for (const [idx, comment] of comments.entries()) {
+                const commentTag = await classifier(comment.text)
+                console.log("Analyzer: Tagged comment", idx, commentTag)
                 taggedComments.push({
                     comment,
-                    label: commentsTags[idx].label,
-                    score: commentsTags[idx].score,
+                    label: commentTag[0].label,
+                    score: commentTag[0].score,
                 })
             }
 
