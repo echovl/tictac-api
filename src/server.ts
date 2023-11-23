@@ -1,6 +1,10 @@
-import { ProfileAnalyzer } from "./analyzer.js"
+import { ProfileAnalyzer, TaggedComment } from "./analyzer.js"
 import { TikTok } from "./tiktok.js"
 import { Context, Env } from "hono"
+import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc.js"
+
+dayjs.extend(utc)
 
 export type Server = {
     tiktok: TikTok
@@ -51,6 +55,16 @@ export async function handleUser(c: Context<ServerEnv>) {
     return c.json({ user, lastVideo, comments })
 }
 
+type AggregatedComment = {
+    day: number
+    year: number
+    month: number
+    date: Date
+    taggedComments: Array<TaggedComment>
+    positiveCount: number
+    negativeCount: number
+}
+
 export async function handleComments(c: Context<ServerEnv>) {
     const srv = c.get("server")
     const username = c.req.param("username")
@@ -60,11 +74,39 @@ export async function handleComments(c: Context<ServerEnv>) {
         return c.body("Missing username")
     }
 
-    if (!srv.tiktok.initialized) {
-        await srv.tiktok.init()
+    const comments = await srv.analyzer.getTaggedComments(username)
+    const aggregatedComments = new Array<AggregatedComment>()
+
+    for (const comment of comments) {
+        const date = dayjs.utc(comment.comment.createTime * 1000)
+        const year = date.year()
+        const month = date.month()
+        const day = date.date()
+
+        const existing = aggregatedComments.find(
+            (c) => c.year == year && c.month == month && c.day == day
+        )
+        const isPositive = comment.label == "POSITIVE"
+
+        if (existing) {
+            existing.positiveCount += isPositive ? 1 : 0
+            existing.negativeCount += isPositive ? 0 : 1
+            existing.taggedComments.push(comment)
+        } else {
+            aggregatedComments.push({
+                day,
+                year,
+                month,
+                date: date.toDate(),
+                taggedComments: [comment],
+                positiveCount: isPositive ? 1 : 0,
+                negativeCount: isPositive ? 0 : 1,
+            })
+        }
     }
 
-    const comments = await srv.analyzer.getTaggedComments(username)
-
-    return c.json({ pending: comments.length == 0, comments })
+    return c.json({
+        pending: comments.length == 0,
+        commentsPerDay: aggregatedComments,
+    })
 }

@@ -3,7 +3,7 @@ import { pipeline } from "@xenova/transformers"
 
 import { TikTok, TikTokComment } from "./tiktok.js"
 
-const MAX_VIDEOS_PER_USER = 10
+const MAX_VIDEOS_PER_USER = 15
 const MAX_COMMENTS_PER_VIDEO = 50
 const PROFILE_ANALYSIS_EXPIRATION = 60 * 60 * 1 // 1 hour
 
@@ -75,9 +75,8 @@ export class ProfileAnalyzer {
 
             console.log(`Analyzer: Tagging comments`)
 
-            for (const [idx, comment] of comments.entries()) {
+            for (const comment of comments) {
                 const commentTag = await classifier(comment.text)
-                console.log("Analyzer: Tagged comment", idx, commentTag)
                 taggedComments.push({
                     comment,
                     label: commentTag[0].label,
@@ -85,12 +84,16 @@ export class ProfileAnalyzer {
                 })
             }
 
+            console.log(`Analyzer: Done tagging comments`)
+
             await this.redis.set(
                 username,
                 JSON.stringify(taggedComments),
                 "EX",
                 PROFILE_ANALYSIS_EXPIRATION
             )
+
+            console.log(`Analyzer: Done analyzing ${username}`)
         } catch (e) {
             console.log(`Analyzer: Got error while analyzing ${username}`, e)
         }
