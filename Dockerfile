@@ -7,13 +7,12 @@ RUN apt-get update && apt-get install curl gnupg -y \
   && apt-get install google-chrome-stable -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://bun.sh/install | bash
+RUN npm install -g pnpm
 
 COPY . .
 
-ENV PATH="/root/.bun/bin:${PATH}"
+RUN pnpm install
 
-RUN bun install
-RUN bun run ./node_modules/puppeteer/install.mjs
+RUN cd ./node_modules/puppeteer && node install.mjs
 
-CMD [ "bun", "run", "src/index.ts"]
+CMD [ "node", "./dist/index.js" ]

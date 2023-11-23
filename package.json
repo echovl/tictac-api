@@ -1,17 +1,26 @@
 {
-  "name": "tictac-api",
-  "devDependencies": {
-    "bun-types": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "@xenova/transformers": "^2.9.0",
-    "hono": "^3.10.2",
-    "ioredis": "^5.3.2",
-    "puppeteer": "^21.5.2",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
-  }
+    "name": "tictac-api",
+    "type": "module",
+    "scripts": {
+        "start": "node ./dist/index.js",
+        "build": "tsc",
+        "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts"
+    },
+    "devDependencies": {
+        "bun-types": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@hono/node-server": "^1.2.3",
+        "@xenova/transformers": "^2.9.0",
+        "hono": "^3.10.2",
+        "ioredis": "^5.3.2",
+        "puppeteer": "^21.5.2",
+        "puppeteer-extra": "^3.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2",
+        "sharp": "^0.32.6",
+        "ts-node-dev": "^2.0.0"
+    }
 }

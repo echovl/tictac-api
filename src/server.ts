@@ -1,5 +1,5 @@
-import { ProfileAnalyzer } from "./analyzer"
-import { TikTok } from "./tiktok"
+import { ProfileAnalyzer } from "./analyzer.js"
+import { TikTok } from "./tiktok.js"
 import { Context, Env } from "hono"
 
 export type Server = {
@@ -43,8 +43,13 @@ export async function handleUser(c: Context<ServerEnv>) {
     }
 
     const user = await srv.tiktok.getUser(username)
+    console.log("user", user)
     const [lastVideo] = await srv.tiktok.getVideos(user, 1)
+    console.log("lastVideo", lastVideo)
     const comments = await srv.tiktok.getComments(lastVideo, 20)
+    console.log("comments", comments)
+
+    setTimeout(() => srv.analyzer.analyze(username), 1000)
 
     return c.json({ user, lastVideo, comments })
 }

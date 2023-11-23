@@ -81,11 +81,13 @@ export class TikTok {
         await session.goto("https://www.tiktok.com")
 
         // Evaluate common URL parameters
+        // @ts-ignore
         const userAgent = await session.evaluate(() => navigator.userAgent)
         const language = await session.evaluate(
             // @ts-ignore
             (): string => navigator.language || navigator.userLanguage
         )
+        // @ts-ignore
         const platform = await session.evaluate(() => navigator.platform)
         const deviceId = random(10 ** 18, 10 ** 19).toString()
         const historyLen = random(1, 10).toString()
@@ -355,10 +357,14 @@ export class TikTok {
                 }
 
                 // Exponential backoff
-                await Bun.sleep(500 * 2 ** retryCount)
+                await sleep(500 * 2 ** retryCount)
             }
         }
     }
+}
+
+async function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 function random(min: number, max: number): number {
