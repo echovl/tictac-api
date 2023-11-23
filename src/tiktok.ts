@@ -326,6 +326,8 @@ export class TikTok {
         let retryCount = 0
         while (true) {
             try {
+                console.log("makeRequest", url.toString(), this.headers)
+
                 const response = await this.session.evaluate(
                     (url, headers) => {
                         return new Promise<string>((resolve, reject) => {
