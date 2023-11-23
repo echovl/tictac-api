@@ -1,4 +1,12 @@
-import { ServerEnv, Server, handleSearch, handleUser, handleComments } from "./server.js"
+import {
+    ServerEnv,
+    Server,
+    handleSearch,
+    handleUser,
+    handleComments,
+    handleWordCloud,
+} from "./server.js"
+
 import { serve } from "@hono/node-server"
 import { logger } from "hono/logger"
 import { cors } from "hono/cors"
@@ -27,6 +35,7 @@ app.use("*", async (c, next) => {
 app.get("/search/:searchTerm", handleSearch)
 app.get("/user/:username", handleUser)
 app.get("/comments/:username", handleComments)
+app.get("/wordcloud/:username", handleWordCloud)
 
 console.log("Starting server")
 

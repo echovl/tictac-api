@@ -6,6 +6,21 @@ import utc from "dayjs/plugin/utc.js"
 
 dayjs.extend(utc)
 
+type AggregatedComment = {
+    day: number
+    year: number
+    month: number
+    date: Date
+    taggedComments: Array<TaggedComment>
+    positiveCount: number
+    negativeCount: number
+}
+
+type AggregatedWord = {
+    label: string
+    count: number
+}
+
 export type Server = {
     tiktok: TikTok
     analyzer: ProfileAnalyzer
@@ -55,16 +70,6 @@ export async function handleUser(c: Context<ServerEnv>) {
     return c.json({ user, lastVideo, comments })
 }
 
-type AggregatedComment = {
-    day: number
-    year: number
-    month: number
-    date: Date
-    taggedComments: Array<TaggedComment>
-    positiveCount: number
-    negativeCount: number
-}
-
 export async function handleComments(c: Context<ServerEnv>) {
     const srv = c.get("server")
     const username = c.req.param("username")
@@ -108,5 +113,37 @@ export async function handleComments(c: Context<ServerEnv>) {
     return c.json({
         pending: comments.length == 0,
         commentsPerDay: aggregatedComments,
+    })
+}
+
+export async function handleWordCloud(c: Context<ServerEnv>) {
+    const srv = c.get("server")
+    const username = c.req.param("username")
+
+    if (!username) {
+        c.status(400)
+        return c.body("Missing username")
+    }
+
+    const comments = await srv.analyzer.getTaggedComments(username)
+    const wordCloud = new Array<AggregatedWord>()
+
+    for (const taggedComment of comments) {
+        const text = taggedComment.comment.text.replace(/[^\w\s]/g, "")
+
+        const words = text.split(" ")
+        for (const word of words) {
+            const existing = wordCloud.find((c) => c.label == word)
+            if (existing) {
+                existing.count += 1
+            } else {
+                wordCloud.push({ label: word, count: 1 })
+            }
+        }
+    }
+
+    return c.json({
+        pending: comments.length == 0,
+        words: wordCloud,
     })
 }
