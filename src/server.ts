@@ -1,9 +1,10 @@
+import { ProfileAnalyzer } from "./analyzer"
 import { TikTok } from "./tiktok"
 import { Context, Env } from "hono"
 
 export type Server = {
-    msToken: string
     tiktok: TikTok
+    analyzer: ProfileAnalyzer
 }
 
 export interface ServerEnv extends Env {

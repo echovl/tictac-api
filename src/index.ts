@@ -2,13 +2,17 @@ import { ServerEnv, Server, handleSearch, handleUser } from "./server"
 import { logger } from "hono/logger"
 import { Hono } from "hono"
 import { TikTok } from "./tiktok"
+import { Redis } from "ioredis"
+import { ProfileAnalyzer } from "./analyzer"
+
+const redis = new Redis(process.env.REDIS_URL as string)
+const tiktok = new TikTok(
+    "2kt14PJbSR9PnKwNw9ZMAHtuGhjx_CzokqtR_PIcJaIeTIvO7bMfelxY5KEXAbaenzWNvh4L-_qqOaZVITV9dPWv9o9UB0cy7U-9qx4yycMq9HoPObSAjtDOl1nayxyBd_pzumi4bOzlurqoQw=="
+)
 
 const srv: Server = {
-    msToken:
-        "2kt14PJbSR9PnKwNw9ZMAHtuGhjx_CzokqtR_PIcJaIeTIvO7bMfelxY5KEXAbaenzWNvh4L-_qqOaZVITV9dPWv9o9UB0cy7U-9qx4yycMq9HoPObSAjtDOl1nayxyBd_pzumi4bOzlurqoQw==",
-    tiktok: new TikTok(
-        "2kt14PJbSR9PnKwNw9ZMAHtuGhjx_CzokqtR_PIcJaIeTIvO7bMfelxY5KEXAbaenzWNvh4L-_qqOaZVITV9dPWv9o9UB0cy7U-9qx4yycMq9HoPObSAjtDOl1nayxyBd_pzumi4bOzlurqoQw=="
-    ),
+    tiktok,
+    analyzer: new ProfileAnalyzer(tiktok, redis),
 }
 
 await srv.tiktok.init()

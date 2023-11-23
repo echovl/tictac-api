@@ -77,7 +77,9 @@ export class TikTok {
         // Get headers from the first request
         let headers = {}
         session.once("request", (req) => (headers = req.headers()))
-        await session.goto("https://www.tiktok.com")
+        await session.goto("https://www.tiktok.com", {
+            waitUntil: "networkidle0",
+        })
 
         // Evaluate common URL parameters
         const userAgent = await session.evaluate(() => navigator.userAgent)
