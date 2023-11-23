@@ -306,6 +306,11 @@ export class TikTok {
         if (!this.session) {
             throw TikTokErrNotInitialized
         }
+
+        await this.session.waitForFunction(
+            "window.byted_acrawler !== undefined"
+        )
+
         const { "X-Bogus": xBogus } = await this.session.evaluate(
             (url) =>
                 // @ts-ignore
