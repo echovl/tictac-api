@@ -11,7 +11,7 @@ RUN npm install -g pnpm
 
 COPY . .
 
-RUN pnpm install
+RUN pnpm install && pnpm run build
 
 RUN cd ./node_modules/puppeteer && node install.mjs
 
