@@ -61,7 +61,10 @@ export class ProfileAnalyzer {
             const status = await this.redis.get(taggingStatusKey(username))
 
             // Don't analyze if already in progress
-            if (status === TaggingStatus.InProgress) {
+            if (
+                status === TaggingStatus.InProgress ||
+                status === TaggingStatus.Done
+            ) {
                 return
             }
 
@@ -71,7 +74,9 @@ export class ProfileAnalyzer {
 
             await this.redis.set(
                 taggingStatusKey(username),
-                TaggingStatus.InProgress
+                TaggingStatus.InProgress,
+                "EX",
+                PROFILE_ANALYSIS_EXPIRATION
             )
 
             const videos = await this.tiktok.getVideos(
@@ -111,13 +116,16 @@ export class ProfileAnalyzer {
 
                 await this.redis.set(
                     taggedCommentsKey(username),
-                    JSON.stringify(taggedComments),
-                    "EX",
-                    PROFILE_ANALYSIS_EXPIRATION
+                    JSON.stringify(taggedComments)
                 )
             }
 
-            await this.redis.set(taggingStatusKey(username), TaggingStatus.Done)
+            await this.redis.set(
+                taggingStatusKey(username),
+                TaggingStatus.Done,
+                "EX",
+                PROFILE_ANALYSIS_EXPIRATION
+            )
 
             this.isAnalyzing = false
             // Sort comments by creation time ascending
@@ -131,7 +139,9 @@ export class ProfileAnalyzer {
 
             await this.redis.set(
                 taggingStatusKey(username),
-                TaggingStatus.Error
+                TaggingStatus.Error,
+                "EX",
+                PROFILE_ANALYSIS_EXPIRATION
             )
         }
     }
